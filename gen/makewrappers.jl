@@ -746,6 +746,9 @@ function gen_global_vars(global_vars)
     for v in global_vars
         name = v.name
         jtype = juliatype(v.type)
+        if haskey(docs, name)
+            header *= "\n"*docstr(docs[name])
+        end                
         header *= "const $name = Ref{$jtype}()\n"
         loader *= "    $name[] =  @gload_pp(:$(v.name), $jtype) \n"
     end

@@ -14,23 +14,22 @@ function parse_file(docs, filename)
     while lineno < length(lines)
         l = lines[lineno]
         # Walk until we find a section
-        m = match(r"^\.\. (type|function|const|macro):: (.*)$", l)
+        m = match(r"^ *\.\. (type|function|const|macro|var):: (.*)$", l)
         if m==nothing
             lineno += 1
         else
             sectype = m.captures[1]
             secdecl = replace(m.captures[2], r"(^ +| +$)" => "")
             str, lineno = glob_section(lines, lineno+1)
-            if sectype == "type" || sectype == "const" || sectype == "macro"
-                # type def
-                name = secdecl
-            else
+            if sectype == "function"
                 # function 
                 m = match(r"(^| )(\w+) *\(", secdecl)
                 if m==nothing
                     error("Failed to match function declaration:\n$secdecl")
                 end
                 name = m.captures[2]
+            else
+                name = secdecl
             end
             # convert RST to Markdown
             docstr = convert_text(str, "md", format="rst")
@@ -46,7 +45,7 @@ function glob_section(lines, lineno)
         l = lines[lineno]
         reg_adorn = Regex("^(\\W)\\1{$(prevlength-1)}((?!\\1)|\$)")
         # Glob lines until we encounter the next section or files ends
-        if occursin(r"^\.\. (?!math|code)", l)
+        if occursin(r"^ *\.\. (?!math|code|only)", l)
             break
         end
         if (prevlength>0 && occursin(reg_adorn, l))
